@@ -1,113 +1,290 @@
-import Image from 'next/image'
+'use client'
+import { io } from "socket.io-client";
+import { useEffect, useState} from "react";
 
-export default function Home() {
+function App() {
+  // const [socketInstance, setSocketInstance] = useState("");
+  // const [loading, setLoading] = useState(true);
+  const [buttonStatus, setButtonStatus] = useState(false);
+  const [devices, setDevices] = useState({
+    "Exhausts": {},
+    "Supplies": {},
+    "Humidity Sensors": {},
+    "Motion Sensors": {} 
+  })
+
+  // "Exhausts": {
+  //   "Ventahood L1": [0, 200],
+  //   device: [status, cfm, type]
+  // },
+  // "Supplies": {
+  //   "Fresh Air": [0, 200],
+  //   device: [status, cfm, type]
+  // },
+  // "Humidity Sensors": {
+  //   "Double Bathroom": 57,
+  //   device: humidity
+  // },
+  // "Motion Sensors": {
+  //   "N-Bath Motion": 57,
+  //   device: motion
+  // } 
+
+
+
+  const handleClick = () => {
+    if (buttonStatus === false) {
+      setButtonStatus(true);
+    } else {
+      setButtonStatus(false);
+    }
+  };
+
+  useEffect(() => {
+    // if (buttonStatus === true) {
+      const socket = io("localhost:4000/", {
+        transports: ["websocket"],
+        cors: {
+          origin: "http://localhost:3001/",
+        },
+      });
+
+      // setSocketInstance(socket);
+
+      socket.on("connect", (data) => {
+        console.log("connected");
+      });
+
+      // setLoading(false);
+      socket.on("node_changed", (data) => {
+        const [typeNode, node, state, cfm, typeStatus] = data;
+        console.log("node changed event received");
+        console.log(data);
+        
+        setDevices((prevDevices) => {
+          let updatedDevices = { ...prevDevices };
+
+          if (data.length === 5) {
+            updatedDevices[typeNode] = {
+              ...updatedDevices[typeNode],
+              [node]: [state, cfm, typeStatus],
+            };
+          } else if (typeNode === "Exhausts" || typeNode === "Supplies") {
+            updatedDevices[typeNode] = {
+              ...updatedDevices[typeNode],
+              [node]: [state, prevDevices[typeNode][node][1], prevDevices[typeNode][node][2]],
+            };
+            // console.log(prevDevices[typeNode][node])
+          } else {
+            updatedDevices[typeNode] = {
+              ...updatedDevices[typeNode],
+              [node]: state,
+            };
+          }
+          
+          console.log(updatedDevices); // Log the updatedDevices object
+          return updatedDevices;
+        });
+      });
+
+      socket.on("disconnect", (data) => {
+        console.log(data);
+      });
+  }, []);
+
+  function DeviceList(props) {
+    return (
+      <div>
+        <h1>{props.deviceType}</h1>
+      </div>
+    )
+  }
+
+  // const formatHumidity = (value) => {
+  //   return "${value}%";
+  // }
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/app/page.js</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+    <div className="bg-gradient-to-br from-background_green to-background_gray h-screen w-screen">
+      <div className="grid grid-cols-3 gap-7 mx-8 py-4">
+        <div className="col-start-2 flex justify-center">
+          <h1 className="text-center text-white text-[35px] font-bold leading-snug col-start-1 inline-block">Pikes Peak IAQ</h1>
+        </div>
+
+        <div className="bg-zinc-300/50 rounded-2xl h-[48px] w-full grid grid-cols-3 place-content-center min-w-[300px]"> 
+          <div className="flex col-span-2 text-white items-center justify-center pl-3">
+            {/* IAQ Controller */}
+            <p className="font-semibold text-lg">IAQ Controller</p>
+          </div>
+          
+          <div className="flex opacity-100 w-24 h-9 bg-salmon rounded-2xl drop-shadow-lg items-center justify-center">
+            <span className="leading-0 inline-block">ON</span>
+            {/* <p className="flex opacity-100 w-24 h-9 bg-salmon rounded-2xl drop-shadow-lg place-content-center leading">ON</p> */}
+            </div>
         </div>
       </div>
+      
+      <div className="flex flex-row flex-wrap w-full h-[90%] justify-evenly">
+        <div className="flex flex-col w-[30%] h-full justify-between">
 
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
+          <div className="w-full h-[48%] bg-background_white rounded-2xl drop-shadow-md px-6">
+            <h2 className="text-center text-xl font-bold leading-snug pt-6 pb-6">Motion Sensors</h2>
+            {Object.entries(devices["Motion Sensors"]).length === 0 ? (
+              <p>The dictionary is empty.</p>
+            ) : (
+              <ul>
+                {Object.entries(devices["Motion Sensors"]).map(([deviceName, deviceStatus]) => (
+                  <li key={deviceName}>
+                    <strong>{deviceName}: </strong>{deviceStatus === 2 
+                    ? "Violated" 
+                    : "Normal"
+                    }
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <div className="w-full h-[48%] bg-background_white rounded-2xl drop-shadow-md mt-4 px-6">
+            <h2 className="text-center text-xl font-bold leading-snug pt-6 pb-6">Humidity Sensors</h2>
+            {Object.entries(devices["Humidity Sensors"]).length === 0 ? (
+              <p>The dictionary is empty.</p>
+            ) : (
+              <ul>
+                {Object.entries(devices["Humidity Sensors"]).map(([deviceName, deviceStatus]) => (
+                  <li key={deviceName}>
+                    <strong>{deviceName}</strong>{": " + deviceStatus + "%"}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+
+
+        <div className="w-[30%] h-full bg-background_white rounded-2xl drop-shadow-md px-6">
+          <h2 className="text-center text-xl font-bold leading-snug pt-6 pb-6">Exhausts</h2>
+          {Object.entries(devices["Exhausts"]).length === 0 ? (
+            <p>The dictionary is empty.</p>
+          ) : (
+            <div className="bg-stone-300 rounded-2xl">
+              <table className="min-w-full text-left text-sm font-light">
+                <thead class="border-b font-medium dark:border-neutral-500">
+                  <tr>
+                    <th scope="col" class="px-6 py-4">Fan Name</th>
+                    <th scope="col" class="pl-2 pr-4 py-4">Level %</th>
+                    <th scope="col" class="pl-4 pr-6 py-4">CFM</th>
+                  </tr>
+                </thead>
+                <tbody>
+                {/* {Object.entries(devices["Exhausts"]).map(([deviceName, [deviceStatus, deviceCFM, typeStatus]]) => (
+                <li key={deviceName}>
+                  <strong>{deviceName}</strong>{": "}{typeStatus === "bool" 
+                    ? (deviceStatus === 2 
+                      ? ("100. cfm: " + deviceCFM)
+                      : ("0. cfm: 0"))
+                      : (typeStatus === 100
+                        ? (deviceStatus + ". cfm: " + Math.round(deviceCFM * deviceStatus / 100))
+                        : (Math.round(deviceStatus* 100 / 255) + ". cfm: " + Math.round(deviceCFM * deviceStatus / 255))
+                        )
+                    }
+                </li>
+              ))} */}
+                  {Object.entries(devices["Exhausts"]).map(([deviceName, [deviceStatus, deviceCFM, typeStatus]]) => (
+                    <tr class="border-b dark:border-neutral-500 last:border-b-0">
+                      <td class="whitespace-nowrap pl-6 pr-1 py-4 font-medium">{deviceName}</td>
+                      {typeStatus === 'bool' ?
+                        (deviceStatus === 2 ?
+                          (<td class="whitespace-nowrap pl-2 pr-3 py-4 font-medium">100</td>)
+                          : (<td class="whitespace-nowrap pl-2 pr-3 py-4 font-medium">0</td>))
+                        : (typeStatus === 100 ?
+                            <td class="whitespace-nowrap pl-2 pr-3 py-4 font-medium">{deviceStatus}</td>
+                            : <td class="whitespace-nowrap pl-2 pr-3 py-4 font-medium">{Math.round(deviceStatus* 100 / 255)}</td>
+                          )
+                      }
+                      {typeStatus === 'bool' ?
+                        (deviceStatus === 2 ?
+                          (<td class="whitespace-nowrap pl-4 pr-3 py-4 font-medium">{deviceCFM}</td>)
+                          : (<td class="whitespace-nowrap pl-4 pr-3 py-4 font-medium">0</td>))
+                        : (typeStatus === 100 ?
+                            <td class="whitespace-nowrap pl-4 pr-3 py-4 font-medium">{Math.round(deviceCFM * deviceStatus / 100)}</td>
+                            : <td class="whitespace-nowrap pl-4 pr-3 py-4 font-medium">{Math.round(deviceCFM * deviceStatus / 255)}</td>
+                          )
+                      }
+                    </tr>
+                    ))}
+                </tbody>
+              </table>
+
+            {/* <ul>
+              {Object.entries(devices["Exhausts"]).map(([deviceName, [deviceStatus, deviceCFM, typeStatus]]) => (
+                <li key={deviceName}>
+                  <strong>{deviceName}</strong>{": "}{typeStatus === "bool" 
+                    ? (deviceStatus === 2 
+                      ? ("100. cfm: " + deviceCFM)
+                      : ("0. cfm: 0"))
+                      : (typeStatus === 100
+                        ? (deviceStatus + ". cfm: " + Math.round(deviceCFM * deviceStatus / 100))
+                        : (Math.round(deviceStatus* 100 / 255) + ". cfm: " + Math.round(deviceCFM * deviceStatus / 255))
+                        )
+                    }
+                </li>
+              ))}
+            </ul> */}
+            </div>
+          )}
+        </div>
+        
+        <div className="w-[30%] h-[48%] bg-background_white rounded-2xl drop-shadow-md px-6">
+          <h2 className="text-center text-xl font-bold leading-snug pt-6 pb-6">Supplies</h2>
+          {Object.entries(devices["Supplies"]).length === 0 ? (
+            <p>The dictionary is empty.</p>
+          ) : (
+            <ul>
+              {Object.entries(devices["Supplies"]).map(([deviceName, [deviceStatus, deviceCFM, typeStatus]]) => (
+                <li key={deviceName}>
+                  <strong>{deviceName}</strong>{": "}{typeStatus === "bool"
+                    ? (deviceStatus + ". cfm: " + (deviceCFM * deviceStatus /100))
+                    : (Math.round(deviceStatus * 100 / 255) + ". cfm: " + Math.round(deviceCFM * deviceStatus / 255))
+                    }
+                  {/* + deviceStatus + ", max CFM: " + deviceCFM} */}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
       </div>
 
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800 hover:dark:bg-opacity-30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore the Next.js 13 playground.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  )
+      {/* {Object.entries(devices).map(([deviceType, deviceData]) => (
+        <div key={deviceType}>
+          <h2>{deviceType}</h2>
+          {Object.entries(deviceData).length === 0 ? (
+            <p>The dictionary is empty.</p>
+          ) : (
+            <ul>
+              {Object.entries(deviceData).map(([deviceName, deviceStatus]) => (
+                <li key={deviceName}>
+                  <strong>{deviceName}:</strong>{" "}
+                  {deviceType === "Humidity Sensors" 
+                    ? deviceStatus + "%"
+                    : deviceType === "Motion Sensors" 
+                    ? deviceStatus === 2
+                      ? "Violated"
+                      : deviceStatus === 0
+                      ? "Normal"
+                      : "Unknown"
+                    : deviceStatus}                  
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ))} */}
+    </div>
+  );
 }
+
+
+
+export default App;
