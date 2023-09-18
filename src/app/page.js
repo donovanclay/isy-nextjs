@@ -177,19 +177,6 @@ function App() {
                   </tr>
                 </thead>
                 <tbody>
-                {/* {Object.entries(devices["Exhausts"]).map(([deviceName, [deviceStatus, deviceCFM, typeStatus]]) => (
-                <li key={deviceName}>
-                  <strong>{deviceName}</strong>{": "}{typeStatus === "bool" 
-                    ? (deviceStatus === 2 
-                      ? ("100. cfm: " + deviceCFM)
-                      : ("0. cfm: 0"))
-                      : (typeStatus === 100
-                        ? (deviceStatus + ". cfm: " + Math.round(deviceCFM * deviceStatus / 100))
-                        : (Math.round(deviceStatus* 100 / 255) + ". cfm: " + Math.round(deviceCFM * deviceStatus / 255))
-                        )
-                    }
-                </li>
-              ))} */}
                   {Object.entries(devices["Exhausts"]).map(([deviceName, [deviceStatus, deviceCFM, typeStatus]]) => (
                     <tr class="border-b dark:border-neutral-500 last:border-b-0">
                       <td class="whitespace-nowrap pl-6 pr-1 py-4 font-medium">{deviceName}</td>
@@ -215,22 +202,6 @@ function App() {
                     ))}
                 </tbody>
               </table>
-
-            {/* <ul>
-              {Object.entries(devices["Exhausts"]).map(([deviceName, [deviceStatus, deviceCFM, typeStatus]]) => (
-                <li key={deviceName}>
-                  <strong>{deviceName}</strong>{": "}{typeStatus === "bool" 
-                    ? (deviceStatus === 2 
-                      ? ("100. cfm: " + deviceCFM)
-                      : ("0. cfm: 0"))
-                      : (typeStatus === 100
-                        ? (deviceStatus + ". cfm: " + Math.round(deviceCFM * deviceStatus / 100))
-                        : (Math.round(deviceStatus* 100 / 255) + ". cfm: " + Math.round(deviceCFM * deviceStatus / 255))
-                        )
-                    }
-                </li>
-              ))}
-            </ul> */}
             </div>
           )}
         </div>
@@ -240,47 +211,56 @@ function App() {
           {Object.entries(devices["Supplies"]).length === 0 ? (
             <p>The dictionary is empty.</p>
           ) : (
-            <ul>
-              {Object.entries(devices["Supplies"]).map(([deviceName, [deviceStatus, deviceCFM, typeStatus]]) => (
-                <li key={deviceName}>
-                  <strong>{deviceName}</strong>{": "}{typeStatus === "bool"
-                    ? (deviceStatus + ". cfm: " + (deviceCFM * deviceStatus /100))
-                    : (Math.round(deviceStatus * 100 / 255) + ". cfm: " + Math.round(deviceCFM * deviceStatus / 255))
-                    }
-                  {/* + deviceStatus + ", max CFM: " + deviceCFM} */}
-                </li>
-              ))}
-            </ul>
+            <div className="bg-stone-300 rounded-2xl">
+              <table className="min-w-full text-left text-sm font-light">
+                  <thead class="border-b font-medium dark:border-neutral-500">
+                    <tr>
+                      <th scope="col" class="px-6 py-4">Fan Name</th>
+                      <th scope="col" class="pl-2 pr-4 py-4">Level %</th>
+                      <th scope="col" class="pl-4 pr-6 py-4">CFM</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                  {Object.entries(devices["Supplies"]).map(([deviceName, [deviceStatus, deviceCFM, typeStatus]]) => (
+                      <tr class="border-b dark:border-neutral-500 last:border-b-0">
+                        <td class="whitespace-nowrap pl-6 pr-1 py-4 font-medium">{deviceName}</td>
+                        {typeStatus === 'bool' ?
+                          (deviceStatus === 2 ?
+                            (<td class="whitespace-nowrap pl-2 pr-3 py-4 font-medium">100</td>)
+                            : (<td class="whitespace-nowrap pl-2 pr-3 py-4 font-medium">0</td>))
+                          : (typeStatus === 100 ?
+                              <td class="whitespace-nowrap pl-2 pr-3 py-4 font-medium">{deviceStatus}</td>
+                              : <td class="whitespace-nowrap pl-2 pr-3 py-4 font-medium">{Math.round(deviceStatus* 100 / 255)}</td>
+                            )
+                        }
+                        {typeStatus === 'bool' ?
+                          (deviceStatus === 2 ?
+                            (<td class="whitespace-nowrap pl-4 pr-3 py-4 font-medium">{deviceCFM}</td>)
+                            : (<td class="whitespace-nowrap pl-4 pr-3 py-4 font-medium">0</td>))
+                          : (typeStatus === 100 ?
+                              <td class="whitespace-nowrap pl-4 pr-3 py-4 font-medium">{Math.round(deviceCFM * deviceStatus / 100)}</td>
+                              : <td class="whitespace-nowrap pl-4 pr-3 py-4 font-medium">{Math.round(deviceCFM * deviceStatus / 255)}</td>
+                            )
+                        }
+                      </tr>
+                      ))}
+                  </tbody>
+              </table>
+            </div>
+            // <ul>
+            //   {Object.entries(devices["Supplies"]).map(([deviceName, [deviceStatus, deviceCFM, typeStatus]]) => (
+            //     <li key={deviceName}>
+            //       <strong>{deviceName}</strong>{": "}{typeStatus === "bool"
+            //         ? (deviceStatus + ". cfm: " + (deviceCFM * deviceStatus /100))
+            //         : (Math.round(deviceStatus * 100 / 255) + ". cfm: " + Math.round(deviceCFM * deviceStatus / 255))
+            //         }
+            //     </li>
+            //   ))}
+            // </ul>
           )}
         </div>
 
       </div>
-
-      {/* {Object.entries(devices).map(([deviceType, deviceData]) => (
-        <div key={deviceType}>
-          <h2>{deviceType}</h2>
-          {Object.entries(deviceData).length === 0 ? (
-            <p>The dictionary is empty.</p>
-          ) : (
-            <ul>
-              {Object.entries(deviceData).map(([deviceName, deviceStatus]) => (
-                <li key={deviceName}>
-                  <strong>{deviceName}:</strong>{" "}
-                  {deviceType === "Humidity Sensors" 
-                    ? deviceStatus + "%"
-                    : deviceType === "Motion Sensors" 
-                    ? deviceStatus === 2
-                      ? "Violated"
-                      : deviceStatus === 0
-                      ? "Normal"
-                      : "Unknown"
-                    : deviceStatus}                  
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      ))} */}
     </div>
   );
 }
